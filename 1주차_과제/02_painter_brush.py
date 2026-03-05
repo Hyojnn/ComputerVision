@@ -6,7 +6,7 @@ import numpy as np
 # 그림판 배경이 될 빈 이미지 캔버스(도화지) 생성
 # np.ones: 지정한 크기((세로500, 가로600, 3채널))의 배열을 만들고 모두 1로 채웁니다. 
 # 그 위에 255를 곱해주면 모든 값이 (255, 255, 255)가 되어 완전한 흰색 배경 이미지가 완성됩니다.
-img = np.ones((500, 600, 3), np.uint8) * 255 
+img = cv.imread('girl_laughing.jpg') 
 
 brush_size = 5 # 도장의 기본 크기 (반지름=5픽셀)
 # 색상 지정: OpenCV는 이미지 색상을 RGB가 아니라 BGR(Blue, Green, Red) 순서로 다룹니다!
