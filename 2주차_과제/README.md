@@ -113,6 +113,7 @@ cv2.destroyAllWindows()
 * **`cv2.undistort`**: 도출해낸 원근 및 굴절 왜곡 행렬을 반대로 적용하여, 원본 이미지의 휜 부분을 직선 형태로 바르게 펴서 정상 스케일로 시각화해 줍니다.
 
 🖥 실행 결과 화면
+
 <img width="466" height="99" alt="스크린샷 2026-03-12 오후 3 27 30" src="https://github.com/user-attachments/assets/d91658d4-c94c-402b-9f28-0b983f03e1b7" />
 <img width="1273" height="494" alt="스크린샷 2026-03-12 오후 3 29 09 1" src="https://github.com/user-attachments/assets/ce60ccb6-4ea4-474e-bbe9-a6d543de6d9c" />
 
