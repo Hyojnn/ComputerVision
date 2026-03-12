@@ -456,4 +456,6 @@ depth_map[valid_mask] = (f * B) / disparity[valid_mask]
 🖥 실행 결과 화면
 
 <img width="891" height="390" alt="스크린샷 2026-03-12 오후 3 32 22" src="https://github.com/user-attachments/assets/cdcf7432-8dd3-4287-8751-b050a11e1474" />
+<img width="305" height="112" alt="스크린샷 2026-03-12 오후 4 39 56" src="https://github.com/user-attachments/assets/0289c42e-684c-4213-b9a3-b903c7fecab5" />
+
 
