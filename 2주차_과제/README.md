@@ -112,6 +112,9 @@ cv2.destroyAllWindows()
 * **`cv2.calibrateCamera`**: 확보한 각각의 2D와 3D 대응 좌표를 사용하여 카메라 내부 행렬 및 렌즈에서 발생하는 비선형 굴절률(왜곡 계수)를 도출해냅니다.
 * **`cv2.undistort`**: 도출해낸 원근 및 굴절 왜곡 행렬을 반대로 적용하여, 원본 이미지의 휜 부분을 직선 형태로 바르게 펴서 정상 스케일로 시각화해 줍니다.
 
+🖥 실행 결과 화면
+<img width="466" height="99" alt="스크린샷 2026-03-12 오후 3 27 30" src="https://github.com/user-attachments/assets/d91658d4-c94c-402b-9f28-0b983f03e1b7" />
+<img width="1273" height="494" alt="스크린샷 2026-03-12 오후 3 29 09 1" src="https://github.com/user-attachments/assets/ce60ccb6-4ea4-474e-bbe9-a6d543de6d9c" />
 
 ---
 
@@ -190,6 +193,9 @@ dst = cv2.warpAffine(img, M, (w, h))
 * **`M[0, 2] += tx; M[1,2] += ty`**: 반환된 2x3 행렬의 가장 오른쪽 열은 변환의 x축, y축 평행 이동(오프셋)을 담당합니다. 이곳에 이동 값을 수동으로 더해주어 하나의 행렬로 회전/크기/이동을 조합할 수 있습니다.
 * **`cv2.warpAffine`**: 위에서 조합 완성된 2x3 기하학적 아핀 변환 행렬 공식을 원본 픽셀 전체에 일괄 적용(매핑)합니다.
 
+🖥 실행 결과 화면
+
+<img width="1890" height="638" alt="스크린샷 2026-03-12 오후 3 30 54" src="https://github.com/user-attachments/assets/2f5a52fa-5cc7-43c0-ac52-2852df23ab11" />
 
 ---
 
@@ -284,3 +290,8 @@ depth_map[valid_mask] = (f * B) / disparity[valid_mask]
 * **`cv2.StereoBM_create`**: Block Matching 방식으로 한 이미지의 블록을 기준으로 다른 이미지 좌우 픽셀을 순회하여 매칭 시차를 찾아내는 객체를 반환합니다.
 * **`.astype(np.float32) / 16.0`**: BM 방식 모델이 속도를 위해 16가중치의 정수로 결과값을 계산하여 뱉어주므로, 실계산용으로 변환하기 위해 실수 자료형으로 바꾸고 16으로 나누어 소수점 자리수를 회복하는 부분입니다.
 * **`Z = (f * B) / d`**: 삼각측량의 법칙에 따른 물리적인 거리 지표 공식입니다. Disparity(`d`)가 크면 클수록 두 카메라 이미지 상 편차가 강렬하다는 뜻이므로 렌즈에 가까운 것이며, 따라서 Depth(`Z`) 값은 짧게 나옵니다.
+
+🖥 실행 결과 화면
+
+<img width="891" height="390" alt="스크린샷 2026-03-12 오후 3 32 22" src="https://github.com/user-attachments/assets/cdcf7432-8dd3-4287-8751-b050a11e1474" />
+
