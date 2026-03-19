@@ -134,12 +134,13 @@ img_line = img.copy()
 gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
 # 2. Canny 에지 검출을 사용하여 에지 맵 생성 
-# 최소 임계값(100), 최대 임계값(200)을 넘어가는 얇고 선명한 테두리를 흰색 선으로 뽑아냅니다.
-edges = cv.Canny(gray, threshold1=100, threshold2=200)
+# 배경의 노이즈를 줄이되 주요 윤곽선을 놓치지 않도록 임계값을 (50, 150)으로 조절합니다.
+edges = cv.Canny(gray, threshold1=50, threshold2=150)
 
 # 3. 허프 변환을 사용하여 이미지에서 직선 검출
-# 확률적 허프 변환(HoughLinesP)으로, 간격 허용도(maxLineGap)와 최소 길이(minLineLength)에 맞는 직선의 좌표들을 얻어옵니다.
-lines = cv.HoughLinesP(edges, rho=1, theta=np.pi/180, threshold=100, minLineLength=50, maxLineGap=10)
+# 자잘한 선분(노이즈)을 배제하고 메인 형태의 긴 선분들을 정확히 잇기 위해 파라미터 성능을 개선합니다.
+# threshold(임계값: 200), minLineLength(최소 길이: 250), maxLineGap(끊어진 선분 사이 최대 허용 간격: 50) 설정
+lines = cv.HoughLinesP(edges, rho=1, theta=np.pi/180, threshold=200, minLineLength=250, maxLineGap=50)
 
 # 4. 검출된 직선을 원본 이미지에서 빨간색으로 표시
 # 직선이 단 1개라도 배열 데이터로 무사히 검출되었다면,
@@ -187,10 +188,10 @@ plt.close()
 ### 🔑 주요 코드 및 설명
 ```python
 # Canny 에지 검출 (threshold1, threshold2 파라미터 적용)
-edges = cv.Canny(gray, threshold1=100, threshold2=200)
+edges = cv.Canny(gray, threshold1=50, threshold2=150)
 
 # 허프 변환을 통한 직선 성분 추출
-lines = cv.HoughLinesP(edges, rho=1, theta=np.pi/180, threshold=100, minLineLength=50, maxLineGap=10)
+lines = cv.HoughLinesP(edges, rho=1, theta=np.pi/180, threshold=200, minLineLength=250, maxLineGap=50)
 ```
 * **`cv.Canny`**: 윤곽선을 깔끔하게 한 픽셀의 두께로 검출해 내는 함수입니다. 임계값(Threshold1, 2) 설정을 통해 확실한 강력한 경계만 추출하도록 조정합니다.
 * **`cv.HoughLinesP`**: 확률적 허프 변환 알고리즘으로 윤곽선 안에서 직선 성분을 빠르게 찾아 좌표를 도출합니다. `minLineLength`(최소 선 길이)과 `maxLineGap`(끊어진 선 허용 오차) 등을 적절하게 지정해서 좋은 품질의 직선들을 뽑아냅니다.
