@@ -10,10 +10,10 @@
 
 ### 📝 전체 코드
 ```python
-import cv2 as cv # OpenCV 라이브러리를 cv라는 이름으로 불러옵니다.
-import numpy as np # 수치 연산을 위한 numpy 라이브러리를 np라는 이름으로 불러옵니다.
-import matplotlib.pyplot as plt # 그래프나 이미지를 시각화하기 위해 matplotlib의 pyplot을 불러옵니다.
-import os # 운영체제의 파일 및 디렉토리 관리 기능을 사용하기 위해 os 라이브러리를 불러옵니다.
+import cv2 as cv 
+import numpy as np 
+import matplotlib.pyplot as plt 
+import os
 
 # 현재 실행 중인 파일의 절대 경로를 바탕으로 폴더 경로를 지정합니다.
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -105,10 +105,10 @@ magnitude = cv.convertScaleAbs(magnitude)
 
 ### 📝 전체 코드
 ```python
-import cv2 as cv # OpenCV 라이브러리를 cv라는 이름으로 불러옵니다.
-import numpy as np # 수치 연산을 위한 numpy 라이브러리를 np라는 이름으로 불러옵니다.
-import matplotlib.pyplot as plt # 시각화를 위한 matplotlib의 pyplot 기능을 불러옵니다.
-import os # 파일 및 폴더 경로 작업을 위해 os 파이썬 내장 라이브러리를 불러옵니다.
+import cv2 as cv 
+import numpy as np 
+import matplotlib.pyplot as plt 
+import os 
 
 # 현재 디렉토리의 절대 경로를 계산하여 base_dir에 저장합니다.
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -207,10 +207,10 @@ lines = cv.HoughLinesP(edges, rho=1, theta=np.pi/180, threshold=100, minLineLeng
 
 ### 📝 전체 코드
 ```python
-import cv2 as cv # 컴퓨터 비전 처리를 위한 필수 라이브러리 OpenCV를 임포트합니다.
-import numpy as np # 빠르고 강력한 다차원 배열 연산을 돕는 numpy를 불러옵니다.
-import matplotlib.pyplot as plt # 차트나 사진 시각화의 정석인 matplotlib 기능들을 가져옵니다.
-import os # 파일 및 폴더 탐색을 위한 운영 체제 라이브러리 os를 로드합니다.
+import cv2 as cv 
+import numpy as np 
+import matplotlib.pyplot as plt 
+import os
 
 # 이 코드를 돌리고 있는 파이썬 파일 기준 절대경로를 구하여 폴더명만 담습니다.
 base_dir = os.path.dirname(os.path.abspath(__file__))
