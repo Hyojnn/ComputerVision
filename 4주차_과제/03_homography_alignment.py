@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 1. 두 이미지 로드 (샘플 이미지 img1.jpg, img2.jpg 선택)
-img1 = cv.imread('images/img3.jpg') # 변환될 이미지 (오른쪽 사진)
-img2 = cv.imread('images/img2.jpg') # 기준 이미지 (왼쪽 사진)
+img1 = cv.imread('images/img2.jpg') # 캔버스의 기준이 될 이미지 (왼쪽 사진)
+img2 = cv.imread('images/img3.jpg') # 변환되어 오른쪽에 붙을 이미지 (오른쪽 사진)
 
 if img1 is None or img2 is None:
     print('Failed to load images.')
@@ -38,8 +38,8 @@ if len(good_matches) > 4:
     dst_pts = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
     
     # RANSAC을 이용한 호모그래피 계산
-    # img1의 좌표를 변환하여 img2의 좌표계로 맞춤
-    H, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 5.0)
+    # img2의 좌표를 변환하여 img1의 좌표계로 맞춤 (이렇게 하면 오른쪽 사진이 양수 좌표로 확장되므로 잘리지 않습니다)
+    H, mask = cv.findHomography(dst_pts, src_pts, cv.RANSAC, 5.0)
     
     # 5. 한 이미지를 변환하여 정렬 (파노라마)
     # img1을 img2 평면으로 투영. 
@@ -48,16 +48,14 @@ if len(good_matches) > 4:
     h2, w2 = img2_rgb.shape[:2]
     out_w, out_h = w1 + w2, max(h1, h2)
     
-    # img1 변환
-    warped_img1 = cv.warpPerspective(img1_rgb, H, (out_w, out_h))
+    # img2 변환
+    warped_img2 = cv.warpPerspective(img2_rgb, H, (out_w, out_h))
     
-    # 변환된 결과 그림 위에 img2를 겹쳐 그리기
-    # img2는 변환 없이 원점(0,0)에 배치되는 기준 이미지라고 가정했을 경우.
-    # 하지만 img1에서 img2로 변환하는 H를 구했으므로 img2가 기준이 됩니다.
-    panorama = warped_img1.copy()
+    # 변환된 결과 그림 위에 img1을 겹쳐 그리기
+    panorama = warped_img2.copy()
     
-    # img2를 왼쪽에 덮어씌움
-    panorama[0:h2, 0:w2] = img2_rgb
+    # img1을 왼쪽에 덮어씌움
+    panorama[0:h1, 0:w1] = img1_rgb
     
     # 6. 결과 출력
     plt.figure(figsize=(15, 8))
