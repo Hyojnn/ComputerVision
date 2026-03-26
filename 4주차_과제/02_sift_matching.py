@@ -13,7 +13,7 @@ img1_rgb = cv.cvtColor(img1, cv.COLOR_BGR2RGB)
 img2_rgb = cv.cvtColor(img2, cv.COLOR_BGR2RGB)
 
 # 2. SIFT 객체 생성
-sift = cv.SIFT_create()
+sift = cv.SIFT_create(nfeatures = 500 )
 
 # 3. 특징점 및 디스크립터 추출
 kp1, des1 = sift.detectAndCompute(img1, None)
@@ -26,7 +26,7 @@ matches = bf.knnMatch(des1, des2, k=2)
 
 # 좋은 매칭점만 선별 (최근접 이웃 거리 비율 테스트)
 good_matches = []
-ratio_thresh = 0.7  # 임계값 0.7
+ratio_thresh = 0.5  # 임계값 0.5
 for m, n in matches:
     if m.distance < ratio_thresh * n.distance:
         good_matches.append(m)
