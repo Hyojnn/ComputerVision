@@ -51,23 +51,29 @@ if len(good_matches) > 4:
     # img2 변환
     warped_img2 = cv.warpPerspective(img2_rgb, H, (out_w, out_h))
     
-    # 변환된 결과 그림 위에 img1을 겹쳐 그리기 (경계선 스무딩 - Alpha Blending 적용)
-    panorama = warped_img2.copy()
+    # === 경계선 숨기기 고급 기법 (Distance Transform Blending) ===
+    # 1. 파노라마 캔버스 전체 크기에 img1 배치
+    full_img1 = np.zeros((out_h, out_w, 3), dtype=np.uint8)
+    full_img1[0:h1, 0:w1] = img1_rgb
     
-    # img1과 img2가 겹치는 폭(w1)에 대해 x축 기준 선형 그라데이션(알파 값 1.0 -> 0.0) 생성
-    alpha_gradient = np.linspace(1, 0, w1).reshape(1, w1, 1)
+    # 2. 두 이미지의 유효(보이는) 픽셀 영역 정보를 담은 마스크 생성
+    mask1 = np.zeros((out_h, out_w), dtype=np.uint8)
+    mask1[0:h1, 0:w1] = 255
     
-    img1_area = img1_rgb
-    img2_area = warped_img2[0:h1, 0:w1]
+    # warped_img2 중 실제 이미지 데이터가 있는 영역 (검은색 0이 아닌 부분)
+    mask2 = np.any(warped_img2 > 0, axis=2).astype(np.uint8) * 255
     
-    # img2가 할당된 유효한 픽셀 마스크(검은색 빈 공간 제외)
-    valid_mask2 = np.any(img2_area > 0, axis=2, keepdims=True)
+    # 3. 가장자리(안 보이는 부분의 경계선)로부터 얼마나 멀리 떨어져 있는지 거리 계산
+    dist1 = cv.distanceTransform(mask1, cv.DIST_L2, 3)
+    dist2 = cv.distanceTransform(mask2, cv.DIST_L2, 3)
     
-    # 겹치는 부분 혼합: img1은 갈수록 투명해져 0에 수렴하고 img2가 서서히 드러나게 함
-    blended = (img1_area * alpha_gradient + img2_area * (1 - alpha_gradient)).astype(np.uint8)
+    # 4. 거리들을 활용하여 부드러운 가중치(Alpha) 생성
+    # 가장자리에 갈수록(거리가 0이 됨) 알아서 자연스럽게 반대편 사진으로 페이드 인/아웃 됩니다.
+    alpha = dist1 / (dist1 + dist2 + 1e-8)
+    alpha = alpha[:, :, np.newaxis] # 색상 채널에 맞춰 3차원으로 확장
     
-    # img2 데이터가 없던 곳은 그대로 img1 원본 복사, 겹치는 구역은 혼합된 블렌딩 적용
-    panorama[0:h1, 0:w1] = np.where(valid_mask2, blended, img1_area)
+    # 5. 비율에 맞게 두 이미지를 섞어 완벽하게 이어진 파노라마 생성
+    panorama = (full_img1 * alpha + warped_img2 * (1 - alpha)).astype(np.uint8)
     
     # 6. 결과 출력
     plt.figure(figsize=(15, 8))
