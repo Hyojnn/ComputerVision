@@ -10,10 +10,10 @@
 
 ### 📝 전체 코드
 ```python
-import cv2 as cv 
-import numpy as np 
-import matplotlib.pyplot as plt 
-import os
+import cv2 as cv # OpenCV 라이브러리를 cv라는 이름으로 불러옵니다.
+import numpy as np # 수치 연산을 위한 numpy 라이브러리를 np라는 이름으로 불러옵니다.
+import matplotlib.pyplot as plt # 그래프나 이미지를 시각화하기 위해 matplotlib의 pyplot을 불러옵니다.
+import os # 운영체제의 파일 및 디렉토리 관리 기능을 사용하기 위해 os 라이브러리를 불러옵니다.
 
 # 현재 실행 중인 파일의 절대 경로를 바탕으로 폴더 경로를 지정합니다.
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -105,10 +105,10 @@ magnitude = cv.convertScaleAbs(magnitude)
 
 ### 📝 전체 코드
 ```python
-import cv2 as cv 
-import numpy as np 
-import matplotlib.pyplot as plt 
-import os 
+import cv2 as cv # OpenCV 라이브러리를 cv라는 이름으로 불러옵니다.
+import numpy as np # 수치 연산을 위한 numpy 라이브러리를 np라는 이름으로 불러옵니다.
+import matplotlib.pyplot as plt # 시각화를 위한 matplotlib의 pyplot 기능을 불러옵니다.
+import os # 파일 및 폴더 경로 작업을 위해 os 파이썬 내장 라이브러리를 불러옵니다.
 
 # 현재 디렉토리의 절대 경로를 계산하여 base_dir에 저장합니다.
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -188,10 +188,10 @@ plt.close()
 ### 🔑 주요 코드 및 설명
 ```python
 # Canny 에지 검출 (threshold1, threshold2 파라미터 적용)
-edges = cv.Canny(gray, threshold1=50, threshold2=150)
+edges = cv.Canny(gray, threshold1=100, threshold2=200)
 
 # 허프 변환을 통한 직선 성분 추출
-lines = cv.HoughLinesP(edges, rho=1, theta=np.pi/180, threshold=200, minLineLength=250, maxLineGap=50)
+lines = cv.HoughLinesP(edges, rho=1, theta=np.pi/180, threshold=100, minLineLength=50, maxLineGap=10)
 ```
 * **`cv.Canny`**: 윤곽선을 깔끔하게 한 픽셀의 두께로 검출해 내는 함수입니다. 임계값(Threshold1, 2) 설정을 통해 확실한 강력한 경계만 추출하도록 조정합니다.
 * **`cv.HoughLinesP`**: 확률적 허프 변환 알고리즘으로 윤곽선 안에서 직선 성분을 빠르게 찾아 좌표를 도출합니다. `minLineLength`(최소 선 길이)과 `maxLineGap`(끊어진 선 허용 오차) 등을 적절하게 지정해서 좋은 품질의 직선들을 뽑아냅니다.
@@ -208,10 +208,10 @@ lines = cv.HoughLinesP(edges, rho=1, theta=np.pi/180, threshold=200, minLineLeng
 
 ### 📝 전체 코드
 ```python
-import cv2 as cv 
-import numpy as np 
-import matplotlib.pyplot as plt 
-import os
+import cv2 as cv # 컴퓨터 비전 처리를 위한 필수 라이브러리 OpenCV를 임포트합니다.
+import numpy as np # 빠르고 강력한 다차원 배열 연산을 돕는 numpy를 불러옵니다.
+import matplotlib.pyplot as plt # 차트나 사진 시각화의 정석인 matplotlib 기능들을 가져옵니다.
+import os # 파일 및 폴더 탐색을 위한 운영 체제 라이브러리 os를 로드합니다.
 
 # 이 코드를 돌리고 있는 파이썬 파일 기준 절대경로를 구하여 폴더명만 담습니다.
 base_dir = os.path.dirname(os.path.abspath(__file__))

@@ -2,7 +2,7 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 
 # 1. 이미지 로드
-img = cv.imread('mot_color70.jpg')
+img = cv.imread('images/mot_color70.jpg')
 if img is None:
     print('Failed to load image.')
     exit()
@@ -43,5 +43,5 @@ plt.title('SIFT Keypoints')
 plt.axis('off')
 
 plt.tight_layout()
-plt.savefig('과제1_결과.png')
+plt.savefig('results/과제1_결과.png')
 # plt.show()

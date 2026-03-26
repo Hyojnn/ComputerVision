@@ -2,8 +2,8 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 
 # 1. 두 이미지 로드
-img1 = cv.imread('mot_color70.jpg')
-img2 = cv.imread('mot_color83.jpg') # 80 대신 존재하는 83 사용
+img1 = cv.imread('images/mot_color70.jpg')
+img2 = cv.imread('images/mot_color83.jpg') # 80 대신 존재하는 83 사용
 
 if img1 is None or img2 is None:
     print('Failed to load images.')
@@ -45,5 +45,5 @@ plt.imshow(img_matches)
 plt.title('SIFT Matching (Good Matches)')
 plt.axis('off')
 
-plt.savefig('과제2_결과.png')
+plt.savefig('results/과제2_결과.png')
 # plt.show()

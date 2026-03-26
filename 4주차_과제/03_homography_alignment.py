@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 1. 두 이미지 로드 (샘플 이미지 img1.jpg, img2.jpg 선택)
-img1 = cv.imread('img1.jpg')
-img2 = cv.imread('img2.jpg')
+img1 = cv.imread('images/img1.jpg')
+img2 = cv.imread('images/img2.jpg')
 
 if img1 is None or img2 is None:
     print('Failed to load images.')
@@ -73,7 +73,7 @@ if len(good_matches) > 4:
     plt.axis('off')
     
     plt.tight_layout()
-    plt.savefig('과제3_결과.png')
+    plt.savefig('results/과제3_결과.png')
     # plt.show()
 else:
     print('Not enough matches are found - {}/4'.format(len(good_matches)))
