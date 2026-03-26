@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 1. 두 이미지 로드 (샘플 이미지 img1.jpg, img2.jpg 선택)
-img1 = cv.imread('images/img2.jpg') # 변환될 이미지 (오른쪽 사진)
-img2 = cv.imread('images/img1.jpg') # 기준 이미지 (왼쪽 사진)
+img1 = cv.imread('images/img3.jpg') # 변환될 이미지 (오른쪽 사진)
+img2 = cv.imread('images/img2.jpg') # 기준 이미지 (왼쪽 사진)
 
 if img1 is None or img2 is None:
     print('Failed to load images.')
