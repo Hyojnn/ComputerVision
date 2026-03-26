@@ -74,6 +74,7 @@ if len(good_matches) > 4:
     
     plt.tight_layout()
     plt.savefig('results/과제3_결과.png')
-    # plt.show()
+    print('결과가 results/과제3_결과.png에 저장되었습니다.')
+    plt.show()
 else:
     print('Not enough matches are found - {}/4'.format(len(good_matches)))

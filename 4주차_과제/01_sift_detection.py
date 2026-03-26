@@ -44,4 +44,5 @@ plt.axis('off')
 
 plt.tight_layout()
 plt.savefig('results/과제1_결과.png')
-# plt.show()
+print('결과가 results/과제1_결과.png에 저장되었습니다.')
+plt.show()

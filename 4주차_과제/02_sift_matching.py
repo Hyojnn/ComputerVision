@@ -46,4 +46,5 @@ plt.title('SIFT Matching (Good Matches)')
 plt.axis('off')
 
 plt.savefig('results/과제2_결과.png')
-# plt.show()
+print('결과가 results/과제2_결과.png에 저장되었습니다.')
+plt.show()
