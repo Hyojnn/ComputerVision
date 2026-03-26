@@ -51,11 +51,23 @@ if len(good_matches) > 4:
     # img2 변환
     warped_img2 = cv.warpPerspective(img2_rgb, H, (out_w, out_h))
     
-    # 변환된 결과 그림 위에 img1을 겹쳐 그리기
+    # 변환된 결과 그림 위에 img1을 겹쳐 그리기 (경계선 스무딩 - Alpha Blending 적용)
     panorama = warped_img2.copy()
     
-    # img1을 왼쪽에 덮어씌움
-    panorama[0:h1, 0:w1] = img1_rgb
+    # img1과 img2가 겹치는 폭(w1)에 대해 x축 기준 선형 그라데이션(알파 값 1.0 -> 0.0) 생성
+    alpha_gradient = np.linspace(1, 0, w1).reshape(1, w1, 1)
+    
+    img1_area = img1_rgb
+    img2_area = warped_img2[0:h1, 0:w1]
+    
+    # img2가 할당된 유효한 픽셀 마스크(검은색 빈 공간 제외)
+    valid_mask2 = np.any(img2_area > 0, axis=2, keepdims=True)
+    
+    # 겹치는 부분 혼합: img1은 갈수록 투명해져 0에 수렴하고 img2가 서서히 드러나게 함
+    blended = (img1_area * alpha_gradient + img2_area * (1 - alpha_gradient)).astype(np.uint8)
+    
+    # img2 데이터가 없던 곳은 그대로 img1 원본 복사, 겹치는 구역은 혼합된 블렌딩 적용
+    panorama[0:h1, 0:w1] = np.where(valid_mask2, blended, img1_area)
     
     # 6. 결과 출력
     plt.figure(figsize=(15, 8))
