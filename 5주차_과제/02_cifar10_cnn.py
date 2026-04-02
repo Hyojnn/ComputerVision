@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization, RandomFlip, RandomRotation, RandomZoom
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
@@ -44,9 +44,14 @@ if os.path.exists(model_path):
             history_dict = json.load(f)
 else:
     print("\n저장된 모델이 없습니다. 새롭게 훈련을 시작합니다 (이후에는 자동으로 저장되어 훈련이 생략될 수 있습니다).")
-    # 3. CNN 모델 설계 (정확도 향상 버전)
+    # 3. CNN 모델 설계 (데이터 증강 + VGG 스타일 심화 아키텍처)
     model = Sequential([
-        Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=(32, 32, 3)),
+        # 데이터 증강 (가방으로 변형된 이미지를 학습시켜 강건함(Robustness) 대폭 향상)
+        RandomFlip("horizontal", input_shape=(32, 32, 3)),
+        RandomRotation(0.1),
+        RandomZoom(0.1),
+
+        Conv2D(32, (3, 3), padding='same', activation='relu'),
         BatchNormalization(),
         Conv2D(32, (3, 3), padding='same', activation='relu'),
         BatchNormalization(),
@@ -56,6 +61,13 @@ else:
         Conv2D(64, (3, 3), padding='same', activation='relu'),
         BatchNormalization(),
         Conv2D(64, (3, 3), padding='same', activation='relu'),
+        BatchNormalization(),
+        MaxPooling2D((2, 2)),
+        Dropout(0.25),
+
+        Conv2D(128, (3, 3), padding='same', activation='relu'),
+        BatchNormalization(),
+        Conv2D(128, (3, 3), padding='same', activation='relu'),
         BatchNormalization(),
         MaxPooling2D((2, 2)),
         Dropout(0.25),
@@ -74,7 +86,7 @@ else:
 
     # 5. 모델 훈련
     print("CNN 모델 훈련 시작...")
-    history = model.fit(x_train, y_train, epochs=20, validation_data=(x_test, y_test))
+    history = model.fit(x_train, y_train, epochs=40, validation_data=(x_test, y_test))
     
     # 훈련 완료 직후 기록(history) 저장
     history_dict = history.history
@@ -98,8 +110,15 @@ if os.path.exists(img_path):
     img = cv2.imread(img_path)
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     
+    # [핵심] 가로세로 비율 왜곡을 막기 위한 Center Crop (정사각형 자르기)
+    h, w = img_rgb.shape[:2]
+    min_dim = min(h, w)
+    start_x = w // 2 - min_dim // 2
+    start_y = h // 2 - min_dim // 2
+    img_cropped = img_rgb[start_y:start_y+min_dim, start_x:start_x+min_dim]
+    
     # 모델 입력 크기에 맞게 이미지 리사이즈 (32x32)
-    img_resized = cv2.resize(img_rgb, (32, 32))
+    img_resized = cv2.resize(img_cropped, (32, 32))
     
     # 정규화 및 배치 차원 추가
     img_input = np.expand_dims(img_resized / 255.0, axis=0)
