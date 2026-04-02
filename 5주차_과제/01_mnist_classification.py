@@ -4,8 +4,12 @@ from tensorflow.keras.layers import Dense, Flatten
 import matplotlib.pyplot as plt
 import os
 
+# 현재 스크립트의 디렉토리를 기준으로 경로 설정
+current_dir = os.path.dirname(os.path.abspath(__file__))
+results_dir = os.path.join(current_dir, 'results')
+
 # results 폴더 확인
-os.makedirs('results', exist_ok=True)
+os.makedirs(results_dir, exist_ok=True)
 
 # 1. MNIST 데이터셋 로드
 print("MNIST 데이터셋 로드 중...")
@@ -58,5 +62,5 @@ plt.ylabel('Loss')
 plt.legend()
 
 plt.tight_layout()
-plt.savefig('results/과제1_결과.png')
-print("결과 그래프가 'results/과제1_결과.png'에 저장되었습니다.")
+plt.savefig(os.path.join(results_dir, '과제1_결과.png'))
+print("결과 그래프가 '5주차_과제/results/과제1_결과.png'에 저장되었습니다.")

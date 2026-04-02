@@ -6,8 +6,12 @@ import cv2
 import numpy as np
 import os
 
+# 현재 스크립트의 디렉토리를 기준으로 경로 설정
+current_dir = os.path.dirname(os.path.abspath(__file__))
+results_dir = os.path.join(current_dir, 'results')
+
 # results 폴더 확인
-os.makedirs('results', exist_ok=True)
+os.makedirs(results_dir, exist_ok=True)
 
 # 1. CIFAR-10 데이터셋 로드
 print("CIFAR-10 데이터셋 로드 중...")
@@ -48,7 +52,7 @@ test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
 print(f"테스트 정확도: {test_acc:.4f}")
 
 # 7. 테스트 이미지에 대한 예측 수행 (dog.jpg)
-img_path = 'image/dog.jpg'
+img_path = os.path.join(current_dir, 'image', 'dog.jpg')
 if os.path.exists(img_path):
     # OpenCV로 이미지 로드 (BGR -> RGB 변환)
     img = cv2.imread(img_path)
@@ -87,7 +91,7 @@ if os.path.exists(img_path):
     plt.axis('off')
     
     plt.tight_layout()
-    plt.savefig('results/과제2_결과.png')
-    print("결과 이미지가 'results/과제2_결과.png'에 저장되었습니다.")
+    plt.savefig(os.path.join(results_dir, '과제2_결과.png'))
+    print("결과 이미지가 '5주차_과제/results/과제2_결과.png'에 저장되었습니다.")
 else:
     print(f"\n오류: 테스트 이미지를 찾을 수 없습니다: {img_path}")
