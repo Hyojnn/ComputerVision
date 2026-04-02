@@ -25,37 +25,52 @@ class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
 # 2. 데이터 전처리 (0~1 범위로 정규화)
 x_train, x_test = x_train / 255.0, x_test / 255.0
 
-# 3. CNN 모델 설계 (정확도 향상 버전)
-model = Sequential([
-    Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=(32, 32, 3)),
-    BatchNormalization(),
-    Conv2D(32, (3, 3), padding='same', activation='relu'),
-    BatchNormalization(),
-    MaxPooling2D((2, 2)),
-    Dropout(0.25),
+# 3~5. 모델 불러오기 또는 새로 훈련하기
+model_path = os.path.join(results_dir, 'cifar10_model.keras')
 
-    Conv2D(64, (3, 3), padding='same', activation='relu'),
-    BatchNormalization(),
-    Conv2D(64, (3, 3), padding='same', activation='relu'),
-    BatchNormalization(),
-    MaxPooling2D((2, 2)),
-    Dropout(0.25),
+if os.path.exists(model_path):
+    # 저장된 모델이 있으면 훈련 건너뛰고 바로 불러오기
+    print(f"\n저장된 모델을 발견했습니다! 훈련을 생략하고 '{model_path}'에서 불러옵니다.")
+    model = tf.keras.models.load_model(model_path)
+    trained_now = False
+else:
+    print("\n저장된 모델이 없습니다. 새롭게 훈련을 시작합니다 (이후에는 자동으로 저장되어 훈련이 생략될 수 있습니다).")
+    # 3. CNN 모델 설계 (정확도 향상 버전)
+    model = Sequential([
+        Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=(32, 32, 3)),
+        BatchNormalization(),
+        Conv2D(32, (3, 3), padding='same', activation='relu'),
+        BatchNormalization(),
+        MaxPooling2D((2, 2)),
+        Dropout(0.25),
 
-    Flatten(),
-    Dense(128, activation='relu'),
-    BatchNormalization(),
-    Dropout(0.5),
-    Dense(10, activation='softmax')
-])
+        Conv2D(64, (3, 3), padding='same', activation='relu'),
+        BatchNormalization(),
+        Conv2D(64, (3, 3), padding='same', activation='relu'),
+        BatchNormalization(),
+        MaxPooling2D((2, 2)),
+        Dropout(0.25),
 
-# 4. 모델 훈련 설정 (컴파일)
-model.compile(optimizer='adam',
-              loss='sparse_categorical_crossentropy',
-              metrics=['accuracy'])
+        Flatten(),
+        Dense(128, activation='relu'),
+        BatchNormalization(),
+        Dropout(0.5),
+        Dense(10, activation='softmax')
+    ])
 
-# 5. 모델 훈련
-print("CNN 모델 훈련 시작...")
-history = model.fit(x_train, y_train, epochs=20, validation_data=(x_test, y_test))
+    # 4. 모델 훈련 설정 (컴파일)
+    model.compile(optimizer='adam',
+                  loss='sparse_categorical_crossentropy',
+                  metrics=['accuracy'])
+
+    # 5. 모델 훈련
+    print("CNN 모델 훈련 시작...")
+    history = model.fit(x_train, y_train, epochs=20, validation_data=(x_test, y_test))
+    
+    # 훈련 완료 후 모델 로컬 저장
+    model.save(model_path)
+    print(f"모델 훈련 완료! '{model_path}' 경로에 영구적으로 저장되었습니다.")
+    trained_now = True
 
 # 6. 모델 성능 평가
 print("\n모델 평가:")
@@ -84,22 +99,28 @@ if os.path.exists(img_path):
     print(f"\n예측 결과: {predicted_class} (정확도: {confidence:.2f}%)")
     
     # 8. 결과 시각화 및 저장
-    plt.figure(figsize=(12, 5))
-    
-    # 모델 정확도 변화 그래프
-    plt.subplot(1, 2, 1)
-    plt.plot(history.history['accuracy'], label='Training Accuracy')
-    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
-    plt.title('CNN Model Accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.legend()
-    
-    # 테스트 이미지 예측 결과 패널
-    plt.subplot(1, 2, 2)
-    plt.imshow(img_rgb)
-    plt.title(f"Prediction: {predicted_class} ({confidence:.2f}%)")
-    plt.axis('off')
+    if trained_now:
+        # 훈련을 막 끝냈다면 Epoch 정확도 그래프와 함께 결과 표출
+        plt.figure(figsize=(12, 5))
+        
+        plt.subplot(1, 2, 1)
+        plt.plot(history.history['accuracy'], label='Training Accuracy')
+        plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+        plt.title('CNN Model Accuracy')
+        plt.xlabel('Epoch')
+        plt.ylabel('Accuracy')
+        plt.legend()
+        
+        plt.subplot(1, 2, 2)
+        plt.imshow(img_rgb)
+        plt.title(f"Prediction: {predicted_class} ({confidence:.2f}%)")
+        plt.axis('off')
+    else:
+        # 로드만 했으므로 이미지만 결과로 표출
+        plt.figure(figsize=(6, 5))
+        plt.imshow(img_rgb)
+        plt.title(f"Prediction: {predicted_class} ({confidence:.2f}%)\n(Loaded Pre-trained Model)")
+        plt.axis('off')
     
     plt.tight_layout()
     plt.savefig(os.path.join(results_dir, '과제2_결과.png'))
