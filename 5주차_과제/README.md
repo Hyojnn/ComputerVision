@@ -95,14 +95,18 @@ CIFAR-10 데이터셋을 활용하여 합성곱 신경망(CNN)을 구축하고, 
 ```python
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 import os
 
+# 현재 스크립트의 디렉토리를 기준으로 경로 설정
+current_dir = os.path.dirname(os.path.abspath(__file__))
+results_dir = os.path.join(current_dir, 'results')
+
 # results 폴더 확인
-os.makedirs('results', exist_ok=True)
+os.makedirs(results_dir, exist_ok=True)
 
 # 1. CIFAR-10 데이터셋 로드
 print("CIFAR-10 데이터셋 로드 중...")
@@ -116,15 +120,26 @@ class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
 # 2. 데이터 전처리 (0~1 범위로 정규화)
 x_train, x_test = x_train / 255.0, x_test / 255.0
 
-# 3. CNN 모델 설계
+# 3. CNN 모델 설계 (정확도 향상 버전)
 model = Sequential([
-    Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)),
+    Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=(32, 32, 3)),
+    BatchNormalization(),
+    Conv2D(32, (3, 3), padding='same', activation='relu'),
+    BatchNormalization(),
     MaxPooling2D((2, 2)),
-    Conv2D(64, (3, 3), activation='relu'),
+    Dropout(0.25),
+
+    Conv2D(64, (3, 3), padding='same', activation='relu'),
+    BatchNormalization(),
+    Conv2D(64, (3, 3), padding='same', activation='relu'),
+    BatchNormalization(),
     MaxPooling2D((2, 2)),
-    Conv2D(64, (3, 3), activation='relu'),
+    Dropout(0.25),
+
     Flatten(),
-    Dense(64, activation='relu'),
+    Dense(128, activation='relu'),
+    BatchNormalization(),
+    Dropout(0.5),
     Dense(10, activation='softmax')
 ])
 
@@ -135,7 +150,7 @@ model.compile(optimizer='adam',
 
 # 5. 모델 훈련
 print("CNN 모델 훈련 시작...")
-history = model.fit(x_train, y_train, epochs=10, validation_data=(x_test, y_test))
+history = model.fit(x_train, y_train, epochs=20, validation_data=(x_test, y_test))
 
 # 6. 모델 성능 평가
 print("\n모델 평가:")
@@ -143,7 +158,7 @@ test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
 print(f"테스트 정확도: {test_acc:.4f}")
 
 # 7. 테스트 이미지에 대한 예측 수행 (dog.jpg)
-img_path = 'image/dog.jpg'
+img_path = os.path.join(current_dir, 'image', 'dog.jpg')
 if os.path.exists(img_path):
     img = cv2.imread(img_path)
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -179,24 +194,25 @@ if os.path.exists(img_path):
     plt.axis('off')
     
     plt.tight_layout()
-    plt.savefig('results/과제2_결과.png')
-    print("결과 이미지가 'results/과제2_결과.png'에 저장되었습니다.")
+    plt.savefig(os.path.join(results_dir, '과제2_결과.png'))
+    print("결과 이미지가 '5주차_과제/results/과제2_결과.png'에 저장되었습니다.")
 ```
 
 ### 🔑 주요 코드 및 설명
 ```python
 model = Sequential([
-    Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)),
-    MaxPooling2D((2, 2)),
-    Conv2D(64, (3, 3), activation='relu'),
-    MaxPooling2D((2, 2)),
-    Conv2D(64, (3, 3), activation='relu'),
+    Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=(32, 32, 3)),
+    BatchNormalization(),
+    ...
+    Dropout(0.25),
     Flatten(),
     ...
 ])
 ```
 * **`Conv2D`**: 이미지의 특징(Feature)을 추출하기 위해 3x3 크기의 필터(커널)를 돌며 합성곱 연산을 진행합니다. 레이어를 거칠 때마다 채널 수(32->64)를 증가시켜 점차 복잡한 특징들을 학습하게 됩니다.
 * **`MaxPooling2D`**: 2x2 사이즈 안에서 가장 큰 값을 추출하여 이미지 크기를 절반으로 줄여가며 핵심적인 특징만 간추려 연산량을 감소시킵니다.
+* **`Dropout`**: 모델의 과적합을 방지하기 위해 랜덤하게 일부 뉴런의 연결을 끊어버리는 규제 기법입니다.
+* **`BatchNormalization`**: 각 레이어의 출력을 정규화하여 학습 속도를 가속하고 안정성을 높여줍니다.
 * **데이터 전처리 (정규화)**: 모델의 수렴 속도를 높이고 기울기 폭발/소실을 방지하기 위해 각 픽셀 값을 255.0으로 나누어 `0~1` 범위 내의 스케일로 정규화시켰습니다.
 
 ### 🖥 실행 결과 화면

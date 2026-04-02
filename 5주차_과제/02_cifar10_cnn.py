@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
@@ -25,15 +25,26 @@ class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
 # 2. 데이터 전처리 (0~1 범위로 정규화)
 x_train, x_test = x_train / 255.0, x_test / 255.0
 
-# 3. CNN 모델 설계
+# 3. CNN 모델 설계 (정확도 향상 버전)
 model = Sequential([
-    Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)),
+    Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=(32, 32, 3)),
+    BatchNormalization(),
+    Conv2D(32, (3, 3), padding='same', activation='relu'),
+    BatchNormalization(),
     MaxPooling2D((2, 2)),
-    Conv2D(64, (3, 3), activation='relu'),
+    Dropout(0.25),
+
+    Conv2D(64, (3, 3), padding='same', activation='relu'),
+    BatchNormalization(),
+    Conv2D(64, (3, 3), padding='same', activation='relu'),
+    BatchNormalization(),
     MaxPooling2D((2, 2)),
-    Conv2D(64, (3, 3), activation='relu'),
+    Dropout(0.25),
+
     Flatten(),
-    Dense(64, activation='relu'),
+    Dense(128, activation='relu'),
+    BatchNormalization(),
+    Dropout(0.5),
     Dense(10, activation='softmax')
 ])
 
@@ -44,7 +55,7 @@ model.compile(optimizer='adam',
 
 # 5. 모델 훈련
 print("CNN 모델 훈련 시작...")
-history = model.fit(x_train, y_train, epochs=10, validation_data=(x_test, y_test))
+history = model.fit(x_train, y_train, epochs=20, validation_data=(x_test, y_test))
 
 # 6. 모델 성능 평가
 print("\n모델 평가:")
