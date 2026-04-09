@@ -154,9 +154,9 @@ tracks = tracker.update(detections) # 프레임의 바운딩 박스들을 SORT �
 
 ### 📝 전체 코드
 ```python
-import cv2 # 영상 관련 처리를 위한 OpenCV 라이브러리 임포트
-import mediapipe as mp # 얼굴 랜드마크 추출 등에 사용하는 Mediapipe 라이브러리 임포트
-import os # 운영체제 경로 및 디렉토리 관련 처리를 위한 os 모듈 임포트
+import cv2 
+import mediapipe as mp 
+import os 
 
 # 현재 스크립트의 디렉토리를 기준으로 경로 설정
 current_dir = os.path.dirname(os.path.abspath(__file__)) # 현재 실행 중인 파일의 절대 디렉토리 경로
