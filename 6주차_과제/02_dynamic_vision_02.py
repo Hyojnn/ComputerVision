@@ -23,7 +23,7 @@ if not cap.isOpened():
     print("웹캠을 찾을 수 없습니다. 비디오 캡처를 사용할 수 없습니다.")
 
 saved_result = False
-print("얼굴 랜드마크 추출 시작... (종료하려면 ESC를 누르세요)")
+print("얼굴 랜드마크 추출 시작... (중간에 끄려면 'q' 또는 ESC 키를 누르세요)")
 
 # 3. 실시간 영상 캡처 루프
 while cap.isOpened():
@@ -64,8 +64,10 @@ while cap.isOpened():
     # 영상 시각화 터미널 창 출력
     cv2.imshow('Mediapipe FaceMesh', frame)
     
-    # 5. ESC 키를 누르면 루프 종료 (27은 ESC ASCII 번호)
-    if cv2.waitKey(5) & 0xFF == 27:
+    # 5. ESC 키(27) 또는 'q' 키를 누르면 루프 종료
+    key = cv2.waitKey(5) & 0xFF
+    if key == 27 or key == ord('q'):
+        print("사용자에 의해 영상이 중간에 종료되었습니다.")
         break
 
 # 자원 해제

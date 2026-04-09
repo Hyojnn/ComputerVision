@@ -35,7 +35,7 @@ if not cap.isOpened():
     exit()
 
 saved_result = False
-print("비디오 처리 시작...")
+print("비디오 처리 시작... (중간에 끄려면 'q' 또는 ESC 키를 누르세요)")
 
 while True:
     ret, frame = cap.read()
@@ -106,8 +106,10 @@ while True:
         cv2.imwrite(os.path.join(results_dir, '과제1_결과.png'), frame)
         saved_result = True
         
-    # ESC 키를 누르면 종료
-    if cv2.waitKey(30) & 0xFF == 27: 
+    # ESC 키 또는 'q' 키를 누르면 종료
+    key = cv2.waitKey(30) & 0xFF
+    if key == 27 or key == ord('q'): 
+        print("사용자에 의해 영상이 중간에 종료되었습니다.")
         break
         
 cap.release()
