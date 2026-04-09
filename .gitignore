@@ -1,3 +1,6 @@
 *.pdf
 *.txt
-6주차_과제/L06/yolov3.weights
+6주차_과제/yolov3.weights
+yolov3.weights
+__pycache__/
+.DS_Store
