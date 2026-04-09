@@ -10,10 +10,10 @@
 
 ### 📝 전체 코드
 ```python
-import cv2 # OpenCV 라이브러리 임포트 (영상 처리 및 컴퓨터 비전 기능 제공)
-import numpy as np # 수치 연산을 위한 NumPy 라이브러리 임포트
-import os # 운영체제와 상호작용하기 위한 os 모듈 임포트 (파일 경로 처리 등)
-from sort import Sort # 객체 추적을 위한 SORT 알고리즘 클래스 임포트
+import cv2 
+import numpy as np 
+import os 
+from sort import Sort 
 
 # 현재 스크립트 경로를 기준으로 설정
 current_dir = os.path.dirname(os.path.abspath(__file__)) # 현재 실행 중인 스크립트 파일의 절대 경로가 속한 디렉토리 반환
