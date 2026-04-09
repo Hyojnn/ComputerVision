@@ -1,263 +1,214 @@
 # 📷 OpenCV 6주차 과제 정리
 
-본 저장소는 컴퓨터비전 OpenCV 6주차 과제(1~2)를 수행한 결과를 담고 있습니다.
+본 저장소는 컴퓨터비전 OpenCV 6주차 실습 과제(1~2)를 수행한 결과를 담고 있습니다. 다중 객체 추적과 얼굴 랜드마크 검출을 구현하였습니다.
 
 ---
 
 ## 📌 과제 1: SORT 알고리즘을 활용한 다중 객체 추적기 구현
 `01_dynamic_vision_01.py`
-SORT 알고리즘을 사용하여 비디오에서 다중 객체를 실시간으로 추적하는 과제입니다. YOLOv3 객체 검출기와 SORT 알고리즘(칼만 필터 + 헝가리안 알고리즘)을 결합하여 동영상 내 차량 등의 다중 객체를 검출하고 각각의 고유 ID를 부여하여 경계 상자와 함께 시각화합니다.
+사전 훈련된 YOLOv3 객체 검출 모델을 사용하여 비디오 프레임 내 객체를 검출하고, SORT 알고리즘을 사용해 각 객체를 실시간으로 추적 및 ID를 시각화하는 프로그램입니다.
 
 ### 📝 전체 코드
 ```python
 import cv2
 import numpy as np
-import sys
 import os
-
-# add L06 to path to import sort
-sys.path.append(os.path.join(os.path.dirname(__file__), 'L06'))
 from sort import Sort
 
-def main():
-    # Load YOLOv3 network
-    net = cv2.dnn.readNet("L06/yolov3.weights", "L06/yolov3.cfg")
-    layer_names = net.getLayerNames()
+# 현재 스크립트 경로를 기준으로 설정
+current_dir = os.path.dirname(os.path.abspath(__file__))
+results_dir = os.path.join(current_dir, 'results')
+os.makedirs(results_dir, exist_ok=True)
+
+# YOLOv3 설정 파일과 가중치 파일 경로
+cfg_path = os.path.join(current_dir, 'yolov3.cfg')
+weights_path = os.path.join(current_dir, 'yolov3.weights')
+
+# SORT 추적기 초기화
+tracker = Sort()
+
+# YOLO 모델 로드
+print("YOLOv3 모델 로딩 중...")
+net = cv2.dnn.readNetFromDarknet(cfg_path, weights_path)
+layer_names = net.getLayerNames()
+
+try:
+    output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
+except:
+    output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
+
+# 비디오 파일 오픈
+video_path = os.path.join(current_dir, 'slow_traffic_small.mp4')
+cap = cv2.VideoCapture(video_path)
+
+saved_result = False
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+        
+    height, width, channels = frame.shape
     
-    # Check OpenCV version to use appropriate getUnconnectedOutLayers() return format
-    try:
-        output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
-    except:
-        output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
-        
-    # Load coco.names
-    with open("L06/coco.names", "r") as f:
-        classes = [line.strip() for line in f.readlines()]
-        
-    # Open video
-    cap = cv2.VideoCapture("L06/slow_traffic_small.mp4")
-    if not cap.isOpened():
-        print("Error opening video stream or file")
-        return
-
-    # Get video properties for writer
-    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = cap.get(cv2.CAP_PROP_FPS)
-
-    # Initialize SORT tracker
-    tracker = Sort()
-
-    # Define the codec and create VideoWriter object
-    os.makedirs('results', exist_ok=True)
-    out = cv2.VideoWriter('results/01_result.mp4', cv2.VideoWriter_fourcc(*'mp4v'), fps, (frame_width, frame_height))
-
-    frame_idx = 0
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
+    # 1. YOLO를 이용한 객체 검출
+    blob = cv2.dnn.blobFromImage(frame, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
+    net.setInput(blob)
+    outs = net.forward(output_layers)
+    
+    class_ids = []
+    confidences = []
+    boxes = []
+    
+    for out in outs:
+        for detection in out:
+            scores = detection[5:]
+            class_id = np.argmax(scores)
+            confidence = scores[class_id]
             
-        height, width, channels = frame.shape
-
-        # Detecting objects
-        blob = cv2.dnn.blobFromImage(frame, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
-        net.setInput(blob)
-        outs = net.forward(output_layers)
-
-        # Showing informations on the screen
-        class_ids = []
-        confidences = []
-        boxes = []
-        for out_det in outs:
-            for detection in out_det:
-                scores = detection[5:]
-                class_id = np.argmax(scores)
-                confidence = scores[class_id]
-                if confidence > 0.5:
-                    # Object detected
-                    center_x = int(detection[0] * width)
-                    center_y = int(detection[1] * height)
-                    w = int(detection[2] * width)
-                    h = int(detection[3] * height)
-
-                    # Rectangle coordinates
-                    x = int(center_x - w / 2)
-                    y = int(center_y - h / 2)
-
-                    boxes.append([x, y, w, h])
-                    confidences.append(float(confidence))
-                    class_ids.append(class_id)
-
-        # apply Non-Max Suppression
-        indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
-        
-        # Prepare info for SORT
-        # Format for SORT: [x1, y1, x2, y2, score]
-        dets = []
-        if len(indexes) > 0:
-            for i in indexes.flatten():
-                x, y, w, h = boxes[i]
-                dets.append([x, y, x + w, y + h, confidences[i]])
-        
-        dets = np.array(dets)
-        if len(dets) == 0:
-            dets = np.empty((0, 5))
-
-        # Update tracker
-        trackers = tracker.update(dets)
-
-        # Draw tracking results
-        for d in trackers:
-            x1, y1, x2, y2, track_id = [int(v) for v in d]
+            if confidence > 0.5:
+                center_x = int(detection[0] * width)
+                center_y = int(detection[1] * height)
+                w = int(detection[2] * width)
+                h = int(detection[3] * height)
+                
+                x = int(center_x - w / 2)
+                y = int(center_y - h / 2)
+                
+                boxes.append([x, y, w, h])
+                confidences.append(float(confidence))
+                class_ids.append(class_id)
+                
+    # NMS를 통해 겹치는 박스 제거
+    indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
+    
+    # 2. SORT 추적기 입력 형태로 변환 [x1, y1, x2, y2, score]
+    detections = []
+    if len(indexes) > 0:
+        for i in indexes.flatten():
+            x, y, w, h = boxes[i]
+            detections.append([x, y, x + w, y + h, confidences[i]])
             
-            # Draw bounding box
-            color = (0, 255, 0)
-            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-            
-            # Draw track ID
-            text = f"ID: {track_id}"
-            cv2.putText(frame, text, (x1, max(y1 - 10, 0)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
-        out.write(frame)
+    detections = np.array(detections) if len(detections) > 0 else np.empty((0, 5))
+    
+    # 3. SORT 객체 추적 업데이트
+    tracks = tracker.update(detections)
+    
+    # 4. 결과 시각화
+    for track in tracks:
+        x1, y1, x2, y2, track_id = track.astype(int)
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        text = f"ID: {track_id}"
+        cv2.putText(frame, text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
         
-        # print progress
-        if frame_idx % 10 == 0:
-            print(f"Processed {frame_idx} frames")
-        frame_idx += 1
-
-    cap.release()
-    out.release()
-    print("Tracking completed. Output saved to results/01_result.mp4")
-
-if __name__ == "__main__":
-    main()
+    cv2.imshow("SORT Multi-Object Tracking", frame)
+    
+    if not saved_result and len(tracks) > 0:
+        cv2.imwrite(os.path.join(results_dir, '과제1_결과.png'), frame)
+        saved_result = True
+        
+    if cv2.waitKey(30) & 0xFF == 27: 
+        break
+        
+cap.release()
+cv2.destroyAllWindows()
 ```
 
 ### 🔑 주요 코드 및 설명
 ```python
-        # Prepare info for SORT
-        # Format for SORT: [x1, y1, x2, y2, score]
-        dets = []
-        if len(indexes) > 0:
-            for i in indexes.flatten():
-                x, y, w, h = boxes[i]
-                dets.append([x, y, x + w, y + h, confidences[i]])
-                
-        # Update tracker
-        trackers = tracker.update(dets)
+tracker = Sort()
+...
+detections = np.array(detections) if len(detections) > 0 else np.empty((0, 5))
+tracks = tracker.update(detections)
 ```
-* **YOLOv3 객체 검출**: OpenCV의 `dnn` 모듈을 사용하여 YOLOv3의 사전훈련된 가중치와 구성 파일을 읽어 매 프레임별로 물체의 Bounding Box(`[x, y, w, h]`)를 생성합니다.
-* **Non-Max Suppression**: 중복 검출된 영역을 제거하기 위해 `cv2.dnn.NMSBoxes`를 통해 필터링합니다. 
-* **SORT 추적기 업데이트**: 검출기에서 나온 좌표 정보를 `[x1, y1, x2, y2, confidence]` 형식으로 변환하여 `tracker.update(dets)`에 전달합니다. SORT 추적기는 이전 프레임의 위치를 기반으로 ID를 유지시키며 데이터 연관을 수행하여 최종적으로 추적된 객체의 위치 정보와 고유 `track_id`를 반환합니다.
+* **`Sort()`**: 객체들의 위치를 추적하기 위해 칼만 필터(Kalman Filter)와 헝가리안 매칭 알고리즘을 사용하는 SORT 추적기를 초기화합니다.
+* **`tracker.update(detections)`**: 이전 프레임에서 발견된 객체들의 위치 정보와 현재 프레임에서 검출된 객체들을 연관 계산시켜서 동일한 객체는 고유한 `track_id`를 계속 유지하도록 업데이트합니다. YOLOv3만으로는 매 프레임별 객체의 연속성을 알아낼 수 없기에 해당 추적 알고리즘을 사용합니다.
 
 ### 🖥 실행 결과 화면
-![과제1 결과](./results/01_result.jpg)
-
-*(출력된 원본 영상은 `results/01_result.mp4`에 저장되어 있습니다.)*
+![과제1 결과](./results/과제1_결과.png)
 
 ---
 
 ## 📌 과제 2: Mediapipe를 활용한 얼굴 랜드마크 추출 및 시각화
 `02_dynamic_vision_02.py`
-Mediapipe의 FaceMesh 모듈을 사용하여 얼굴의 468개 랜드마크를 추출하고, 이를 실시간 영상(웹캠 등)에 시각화하는 과제입니다.
+웹캠을 통해 캡쳐되는 실시간 영상에서 Google Mediapipe의 `FaceMesh` 모듈을 사용하여 얼굴의 468개 랜드마크를 추출하고 화면에 실시간 렌더링하는 과제입니다.
 
 ### 📝 전체 코드
 ```python
 import cv2
 import mediapipe as mp
 import os
-import argparse
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--test-mode', action='store_true', help='Run for a few frames and save a snapshot')
-    args = parser.parse_args()
+current_dir = os.path.dirname(os.path.abspath(__file__))
+results_dir = os.path.join(current_dir, 'results')
+os.makedirs(results_dir, exist_ok=True)
 
-    mp_face_mesh = mp.solutions.face_mesh
-    face_mesh = mp_face_mesh.FaceMesh(
-        max_num_faces=1,
-        refine_landmarks=True,
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.5
-    )
+# 1. Mediapipe FaceMesh 모듈 초기화
+mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp_face_mesh.FaceMesh(
+    max_num_faces=1,
+    refine_landmarks=True,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5
+)
 
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("Cannot open webcam.")
-        return
+# 2. 웹캠 열기
+cap = cv2.VideoCapture(0)
 
-    os.makedirs('results', exist_ok=True)
-    frame_count = 0
-    saved = False
-
-    print("Press ESC to exit...")
-
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            print("Failed to grab frame.")
-            break
-
-        # Flip the image horizontally for a later selfie-view display
-        frame = cv2.flip(frame, 1)
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        # Process the frame
-        results = face_mesh.process(rgb_frame)
-
-        # Draw the face mesh annotations on the image.
-        if results.multi_face_landmarks:
-            for face_landmarks in results.multi_face_landmarks:
-                for idx, landmark in enumerate(face_landmarks.landmark):
-                    h, w, c = frame.shape
-                    cx, cy = int(landmark.x * w), int(landmark.y * h)
-                    cv2.circle(frame, (cx, cy), 1, (0, 255, 0), -1)
-
-        cv2.imshow('MediaPipe FaceMesh', frame)
-
-        # In test mode, save after a few frames to ensure webcam has adjusted
-        if args.test_mode and frame_count == 30:
-            cv2.imwrite('results/02_result.jpg', frame)
-            print("Snapshot saved to results/02_result.jpg")
-            saved = True
-            break
+saved_result = False
+# 3. 실시간 영상 캡처 루프
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
         
-        frame_count += 1
+    frame.flags.writeable = False
+    
+    # BGR을 RGB로 변환
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    
+    # 얼굴 랜드마크 검출 실행
+    results = face_mesh.process(rgb_frame)
+    
+    frame.flags.writeable = True
+    
+    # 4. 검출된 랜드마크 시각화
+    if results.multi_face_landmarks:
+        for face_landmarks in results.multi_face_landmarks:
+            for landmark in face_landmarks.landmark:
+                # 정규화 좌표를 스케일 변환
+                ih, iw, _ = frame.shape
+                x = int(landmark.x * iw)
+                y = int(landmark.y * ih)
+                
+                # 얼굴 랜드마크를 녹색 점으로 그리기
+                cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
+                
+        if not saved_result:
+            cv2.imwrite(os.path.join(results_dir, '과제2_결과.png'), frame)
+            saved_result = True
+            
+    cv2.imshow('Mediapipe FaceMesh', frame)
+    
+    # 5. ESC 키 입력 시 종료
+    if cv2.waitKey(5) & 0xFF == 27:
+        break
 
-        if cv2.waitKey(1) & 0xFF == 27:
-            break
-
-    # If it wasn't test mode but we exit, let's still save the last frame if we haven't
-    if not saved and frame is not None:
-        cv2.imwrite('results/02_result.jpg', frame)
-        print("Final frame saved to results/02_result.jpg")
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-if __name__ == '__main__':
-    main()
+cap.release()
+cv2.destroyAllWindows()
 ```
 
 ### 🔑 주요 코드 및 설명
 ```python
-        # Process the frame
-        results = face_mesh.process(rgb_frame)
-
-        # Draw the face mesh annotations on the image.
-        if results.multi_face_landmarks:
-            for face_landmarks in results.multi_face_landmarks:
-                for idx, landmark in enumerate(face_landmarks.landmark):
-                    h, w, c = frame.shape
-                    cx, cy = int(landmark.x * w), int(landmark.y * h)
-                    cv2.circle(frame, (cx, cy), 1, (0, 255, 0), -1)
+mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp_face_mesh.FaceMesh(max_num_faces=1, refine_landmarks=True)
+...
+    results = face_mesh.process(rgb_frame)
+...
+                x = int(landmark.x * iw)
+                y = int(landmark.y * ih)
 ```
-* **Face Mesh 초기화**: `mp.solutions.face_mesh.FaceMesh` 모듈을 초기화하여 화면 상의 얼굴 위치를 찾고 복잡한 곡면 형태인 얼굴에 대한 468개 랜드마크를 반환할 수 있도록 설정합니다.
-* **랜드마크 처리 및 변환**: 입력 BGR 이미지를 `cvtColor`를 통해 RGB 공간으로 변환한 뒤 `face_mesh.process()`의 입력값으로 전달합니다.
-* **시각화 (Denormalization)**: 랜드마크 결과의 좌표(`landmark.x`, `landmark.y`)값은 이미지의 크기에 대해 0과 1사이로 정규화되어 있습니다. 따라서 이미지의 높이와 너비를 각각 곱해서 정수형태의 이미지상 위치 좌표로 바꾸어주고 `cv2.circle` 함수를 통해 초록색 점으로 시각화합니다. 
-* **프로그램 종료**: OpenCV의 `waitKey(1)`를 사용해 키 입력을 대기하고, ESC(ASCII값 27)를 누를 경우 반복문을 탈출하여 자원을 해제합니다.
+* **`FaceMesh()`**: 468개(혹은 더 상세한)의 주요 얼굴 특징점 렌더링에 최적화된 Mediapipe 객체를 생성합니다.
+* **`process(rgb_frame)`**: 입력받은 웹캠 프레임(RGB) 상에서 얼굴의 점들을 검출합니다.
+* **비율 변환 (`x, y` 계산)**: Mediapipe가 반환하는 `landmark.x`와 `landmark.y`는 `0.0~1.0`의 정규화된 상댓값이므로, 비디오의 원본 해상도(`iw`, `ih`)를 곱해주어 `cv2.circle()` 함수가 좌표를 인식할 수 있게 변환 해주어야 합니다.
 
 ### 🖥 실행 결과 화면
-![과제2_결과](./results/02_result.jpg)
-*(웹캠 기반으로 실행 시 랜드마크 추출 결과가 위와 같이 나타납니다)*
+![과제2_결과](./results/과제2_결과.png)
